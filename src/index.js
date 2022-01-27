@@ -110,7 +110,7 @@ class Engine {
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(window.innerWidth, window.innerHeight)
     // Turn on VR support
-    // renderer.xr.enabled = true
+    renderer.xr.enabled = true
 
     // Add canvas to the page
     document.body.appendChild(renderer.domElement)
