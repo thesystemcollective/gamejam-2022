@@ -20,11 +20,11 @@ class Engine {
     const render1 = this.createScene({ color: 'green' })
     const render2 = this.createScene({ color: 'red' })
 
-    this.camera1 = render1.camera
+    this.cameraL = render1.camera
     this.scene1 = render1.scene
     this.scene1.background = new THREE.Color('blue')
 
-    this.camera2 = render2.camera
+    this.cameraR = render2.camera
     this.scene2 = render2.scene
 
     // Handle browser resize
@@ -35,17 +35,17 @@ class Engine {
     const mat2 = new THREE.MeshLambertMaterial({ color: 'green' })
 
     // Make a red model
-    const model1 = new THREE.Mesh(geo, mat1)
-    model1.position.set(0.034, 1.5, -10)
-    this.scene1.add(model1)
+    const modelL = new THREE.Mesh(geo, mat1)
+    modelL.position.set(0.34, 1.5, -10)
+    this.scene1.add(modelL)
 
     // Make a green model
-    const model2 = new THREE.Mesh(geo, mat2)
-    model2.position.set(-0.034, 1.5, -10)
-    this.scene2.add(model2)
+    const modelR = new THREE.Mesh(geo, mat2)
+    modelR.position.set(-0.34, 1.5, -10)
+    this.scene2.add(modelR)
 
-    this.model1 = model1
-    this.model2 = model2
+    this.modelL = modelL
+    this.modelR = modelR
 
     document.body.appendChild(VRButton.createButton(this.renderer))
     // this.addFullScreenButton()
@@ -82,7 +82,7 @@ class Engine {
 
     // Make a camera. note that far is set to 100, which is better for realworld sized environments
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200)
-    camera.position.set(0, 1.6, 3)
+    camera.position.set(0, 1.6, 0)
     scene.add(camera)
 
     // Add some lights
@@ -119,20 +119,20 @@ class Engine {
   }
 
   onWindowResize() {
-    this.camera1.aspect = window.innerWidth / window.innerHeight
-    this.camera1.updateProjectionMatrix()
-    this.camera2.aspect = window.innerWidth / window.innerHeight
-    this.camera2.updateProjectionMatrix()
+    this.cameraL.aspect = window.innerWidth / window.innerHeight
+    this.cameraL.updateProjectionMatrix()
+    this.cameraR.aspect = window.innerWidth / window.innerHeight
+    this.cameraR.updateProjectionMatrix()
     this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
   async requestFullscreen() {
-    if (this.XR) {
-      const session = await navigator.xr.requestSession('immersive-vr')
-      const refSpace = await session.requestReferenceSpace('local')
+    // if (this.XR) {
+    //   const session = await navigator.xr.requestSession('immersive-vr')
+    //   const refSpace = await session.requestReferenceSpace('local')
 
-      this.renderer.xr.setSession(session)
-    }
+    //   this.renderer.xr.setSession(session)
+    // }
 
     const elem = this.renderer.domElement
 
@@ -148,21 +148,21 @@ class Engine {
   }
 
   render(time) {
-    const { renderer, model1, model2, scene1, scene2, camera1, camera2 } = this
+    const { renderer, modelL, modelR, scene1, scene2, cameraL, cameraR } = this
     const width = window.innerWidth
     const height = window.innerHeight
     const halfWidth = width / 2
 
     // Rotate the model
-    model1.rotation.y = time / 1000
-    model2.rotation.y = time / 1000
+    modelL.rotation.y = time / 1000
+    modelR.rotation.y = time / 1000
 
     renderer.autoClear = true;
 
     renderer.setViewport(0, 0, halfWidth, height)
 
     // Draw everything
-    renderer.render(scene1, camera1)
+    renderer.render(scene1, cameraL)
 
     // prevent canvas from being erased with next .render call
     renderer.autoClear = false
@@ -170,7 +170,7 @@ class Engine {
     renderer.setViewport(halfWidth, 0, halfWidth, height)
 
     // just render scene2 on top of scene1
-    renderer.render(scene2, camera2)
+    renderer.render(scene2, cameraR)
   }
 }
 
