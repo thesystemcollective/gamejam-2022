@@ -34,12 +34,12 @@ class Engine {
 
     // Make a red model
     const model1 = new THREE.Mesh(geo, mat1)
-    model1.position.set(0, 1.5, -10)
+    model1.position.set(0.34, 1.5, -10)
     this.scene1.add(model1)
 
     // Make a green model
     const model2 = new THREE.Mesh(geo, mat2)
-    model2.position.set(0, 1.5, -10)
+    model2.position.set(-0.34, 1.5, -10)
     this.scene2.add(model2)
 
     this.model1 = model1
@@ -105,7 +105,7 @@ class Engine {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 
     renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setSize(window.innerWidth * 2, window.innerHeight)
     // Turn on VR support
     // renderer.xr.enabled = true
 
@@ -124,10 +124,11 @@ class Engine {
   }
 
   async requestFullscreen() {
-    if (this.XR) {
-      const session = await navigator.xr.requestSession('immersive-vr')
-      console.log({ session })
-    }
+    // if (this.XR) {
+    //   const session = await navigator.xr.requestSession('immersive-vr')
+    //   const refSpace = await session.requestReferenceSpace('local')
+    //   console.log({ session, refSpace })
+    // }
 
     const elem = this.renderer.domElement
 
@@ -154,7 +155,7 @@ class Engine {
 
     renderer.autoClear = true;
 
-    renderer.setViewport(0, 0, halfWidth, height)
+    renderer.setViewport(0, 0, width, height)
 
     // Draw everything
     renderer.render(scene1, camera1)
@@ -162,7 +163,7 @@ class Engine {
     // prevent canvas from being erased with next .render call
     renderer.autoClear = false
 
-    renderer.setViewport(halfWidth, 0, halfWidth, height)
+    renderer.setViewport(width, 0, width, height)
 
     // just render scene2 on top of scene1
     renderer.render(scene2, camera2)
