@@ -155,7 +155,7 @@ class Engine {
 
     renderer.autoClear = true;
 
-    renderer.setViewport(0, 0, width, height)
+    renderer.setViewport(0, 0, halfWidth, height)
 
     // Draw everything
     renderer.render(scene1, camera1)
@@ -163,7 +163,7 @@ class Engine {
     // prevent canvas from being erased with next .render call
     renderer.autoClear = false
 
-    renderer.setViewport(width, 0, width, height)
+    renderer.setViewport(halfWidth, 0, halfWidth, height)
 
     // just render scene2 on top of scene1
     renderer.render(scene2, camera2)
