@@ -2,6 +2,17 @@ import * as THREE from 'three'
 
 class Engine {
   constructor() {
+  }
+
+  async init() {
+    if (navigator.xr) {
+      // If the device allows creation of exclusive sessions set it as the
+      // target of the 'Enter XR' button.
+      const supported = await navigator.xr.isSessionSupported('immersive-vr')
+      this.XR = supported
+    }
+
+
     this.createRenderer()
 
     const render1 = this.createScene({ color: 'green' })
@@ -112,7 +123,12 @@ class Engine {
     this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
-  requestFullscreen() {
+  async requestFullscreen() {
+    if (this.XR) {
+      const session = await navigator.xr.requestSession('immersive-vr')
+      console.log({ session })
+    }
+
     const elem = this.renderer.domElement
 
     if (elem.requestFullscreen) {
@@ -153,4 +169,9 @@ class Engine {
   }
 }
 
-new Engine()
+const main = async () => {
+  const engine = new Engine()
+  await engine.init()
+}
+
+main()
