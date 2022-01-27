@@ -53,9 +53,7 @@ class Engine {
   }
 
   createSkybox({ color, scene }) {
-    console.log('createSkybox', { color, scene })
     const mat = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
-
 
     const geo = new THREE.SphereGeometry(100, 64, 64)
     const skyBox = new THREE.Mesh(geo, mat)
