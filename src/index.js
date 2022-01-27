@@ -18,14 +18,14 @@ class Engine {
     this.createRenderer()
 
     const render1 = this.createScene({ color: 'green' })
-    const render2 = this.createScene({ color: 'red' })
+    // const render2 = this.createScene({ color: 'red' })
 
     this.cameraL = render1.camera
     this.scene1 = render1.scene
-    this.scene1.background = new THREE.Color('blue')
+    // this.scene1.background = new THREE.Color('blue')
 
-    this.cameraR = render2.camera
-    this.scene2 = render2.scene
+    // this.cameraR = render2.camera
+    // this.scene2 = render2.scene
 
     // Handle browser resize
     window.addEventListener('resize', this.onWindowResize.bind(this), false)
@@ -36,13 +36,15 @@ class Engine {
 
     // Make a red model
     const modelL = new THREE.Mesh(geo, mat1)
-    modelL.position.set(0.34, 1.5, -10)
+    modelL.position.set(-0.034, 1.5, -10)
+    modelL.layers.set(1)
     this.scene1.add(modelL)
 
     // Make a green model
     const modelR = new THREE.Mesh(geo, mat2)
-    modelR.position.set(-0.34, 1.5, -10)
-    this.scene2.add(modelR)
+    modelR.position.set(0.034, 1.5, -10)
+    modelR.layers.set(2)
+    this.scene1.add(modelR)
 
     this.modelL = modelL
     this.modelR = modelR
@@ -105,6 +107,8 @@ class Engine {
 
   createRenderer() {
     // Make a renderer that fills the screen
+    // const { cameraL, cameraR } = this
+
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 
     renderer.setPixelRatio(window.devicePixelRatio)
@@ -121,8 +125,8 @@ class Engine {
   onWindowResize() {
     this.cameraL.aspect = window.innerWidth / window.innerHeight
     this.cameraL.updateProjectionMatrix()
-    this.cameraR.aspect = window.innerWidth / window.innerHeight
-    this.cameraR.updateProjectionMatrix()
+    // this.cameraR.aspect = window.innerWidth / window.innerHeight
+    // this.cameraR.updateProjectionMatrix()
     this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
@@ -148,29 +152,14 @@ class Engine {
   }
 
   render(time) {
-    const { renderer, modelL, modelR, scene1, scene2, cameraL, cameraR } = this
-    const width = window.innerWidth
-    const height = window.innerHeight
-    const halfWidth = width / 2
+    const { renderer, modelL, modelR, scene1, cameraL } = this
 
     // Rotate the model
     modelL.rotation.y = time / 1000
     modelR.rotation.y = time / 1000
 
-    renderer.autoClear = true;
-
-    renderer.setViewport(0, 0, halfWidth, height)
-
     // Draw everything
     renderer.render(scene1, cameraL)
-
-    // prevent canvas from being erased with next .render call
-    renderer.autoClear = false
-
-    renderer.setViewport(halfWidth, 0, halfWidth, height)
-
-    // just render scene2 on top of scene1
-    renderer.render(scene2, cameraR)
   }
 }
 
