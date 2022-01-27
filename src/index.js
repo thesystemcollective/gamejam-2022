@@ -1,16 +1,75 @@
 import * as THREE from 'three'
-import { VRButton } from 'three/examples/jsm/webxr/VRButton'
 
 class Engine {
+  constructor() {
+    this.createRenderer()
+
+    const render1 = this.createScene({ color: 'green' })
+    const render2 = this.createScene({ color: 'red' })
+
+    this.camera1 = render1.camera
+    this.scene1 = render1.scene
+    this.scene1.background = new THREE.Color('blue')
+
+    this.camera2 = render2.camera
+    this.scene2 = render2.scene
+
+    // Handle browser resize
+    window.addEventListener('resize', this.onWindowResize.bind(this), false)
+
+    const geo = new THREE.BoxBufferGeometry(1, 1, 1)
+    const mat1 = new THREE.MeshLambertMaterial({ color: 'red' })
+    const mat2 = new THREE.MeshLambertMaterial({ color: 'green' })
+
+    // Make a red model
+    const model1 = new THREE.Mesh(geo, mat1)
+    model1.position.set(0, 1.5, -10)
+    this.scene1.add(model1)
+
+    // Make a green model
+    const model2 = new THREE.Mesh(geo, mat2)
+    model2.position.set(0, 1.5, -10)
+    this.scene2.add(model2)
+
+    this.model1 = model1
+    this.model2 = model2
+
+    this.addFullScreenButton()
+
+    // Set animation loop
+    this.renderer.setAnimationLoop(this.render.bind(this))
+  }
+
+  addFullScreenButton() {
+    const fullScreenButton = document.createElement('button')
+    fullScreenButton.innerText = 'Fullscreen'
+    fullScreenButton.addEventListener('click', this.requestFullscreen.bind(this))
+
+    fullScreenButton.style.position = 'fixed'
+    fullScreenButton.style.top = 0
+    fullScreenButton.style.padding = '1em'
+
+    document.body.appendChild(fullScreenButton)
+  }
+
+  createSkybox({ color, scene }) {
+    console.log('createSkybox', { color, scene })
+    const mat = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
+
+
+    const geo = new THREE.SphereGeometry(100, 64, 64)
+    const skyBox = new THREE.Mesh(geo, mat)
+    scene.add(skyBox)
+  }
 
   createScene({ color = 0x505050 }) {
     // Make a new scene
     const scene = new THREE.Scene()
     // Set background color of the scene to gray
-    scene.background = new THREE.Color(color)
+    // scene.background = new THREE.Color(color)
 
     // Make a camera. note that far is set to 100, which is better for realworld sized environments
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100)
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200)
     camera.position.set(0, 1.6, 3)
     scene.add(camera)
 
@@ -24,23 +83,15 @@ class Engine {
 
     scene.background = null
 
+    this.createSkybox({ color, scene })
+
     return {
       scene,
       camera,
     }
   }
 
-  constructor() {
-    const render1 = this.createScene({ color: 'green' })
-    const render2 = this.createScene({ color: 'red' })
-
-    this.camera1 = render1.camera
-    this.scene1 = render1.scene
-    this.scene1.background = new THREE.Color('blue')
-
-    this.camera2 = render2.camera
-    this.scene2 = render2.scene
-
+  createRenderer() {
     // Make a renderer that fills the screen
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 
@@ -48,45 +99,11 @@ class Engine {
     renderer.setSize(window.innerWidth, window.innerHeight)
     // Turn on VR support
     // renderer.xr.enabled = true
-    // Set animation loop
-    renderer.setAnimationLoop(this.render.bind(this))
 
     // Add canvas to the page
     document.body.appendChild(renderer.domElement)
 
-    // Handle browser resize
-    window.addEventListener('resize', this.onWindowResize.bind(this), false)
-
-    // Make a red model
-    const model1 = new THREE.Mesh(
-      new THREE.BoxBufferGeometry(1, 1, 1),
-      new THREE.MeshLambertMaterial({ color: 'red' }),
-    )
-    model1.position.set(0, 1.5, -10)
-
-    this.scene1.add(model1)
-
-    // Make a green model
-    const model2 = new THREE.Mesh(
-      new THREE.BoxBufferGeometry(1, 1, 1),
-      new THREE.MeshLambertMaterial({ color: 'green' }),
-    )
-    model2.position.set(0, 1.5, -10)
-    this.scene2.add(model2)
-
     this.renderer = renderer
-    this.model1 = model1
-    this.model2 = model2
-
-    const fullScreenButton = document.createElement('button')
-    fullScreenButton.innerText = 'Fullscreen'
-    fullScreenButton.addEventListener('click', this.requestFullscreen.bind(this))
-
-    fullScreenButton.style.position = 'fixed'
-    fullScreenButton.style.top = 0
-    fullScreenButton.style.padding = '1em'
-
-    document.body.appendChild(fullScreenButton)
   }
 
   onWindowResize() {
