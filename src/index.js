@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 
+import { VRButton } from './VRButton.js'
+
 class Engine {
   constructor() {
   }
@@ -34,18 +36,19 @@ class Engine {
 
     // Make a red model
     const model1 = new THREE.Mesh(geo, mat1)
-    model1.position.set(0.34, 1.5, -10)
+    model1.position.set(0.034, 1.5, -10)
     this.scene1.add(model1)
 
     // Make a green model
     const model2 = new THREE.Mesh(geo, mat2)
-    model2.position.set(-0.34, 1.5, -10)
+    model2.position.set(-0.034, 1.5, -10)
     this.scene2.add(model2)
 
     this.model1 = model1
     this.model2 = model2
 
-    this.addFullScreenButton()
+    document.body.appendChild(VRButton.createButton(this.renderer))
+    // this.addFullScreenButton()
 
     // Set animation loop
     this.renderer.setAnimationLoop(this.render.bind(this))
@@ -105,7 +108,7 @@ class Engine {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 
     renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.setSize(window.innerWidth * 2, window.innerHeight)
+    renderer.setSize(window.innerWidth, window.innerHeight)
     // Turn on VR support
     // renderer.xr.enabled = true
 
@@ -124,11 +127,12 @@ class Engine {
   }
 
   async requestFullscreen() {
-    // if (this.XR) {
-    //   const session = await navigator.xr.requestSession('immersive-vr')
-    //   const refSpace = await session.requestReferenceSpace('local')
-    //   console.log({ session, refSpace })
-    // }
+    if (this.XR) {
+      const session = await navigator.xr.requestSession('immersive-vr')
+      const refSpace = await session.requestReferenceSpace('local')
+
+      this.renderer.xr.setSession(session)
+    }
 
     const elem = this.renderer.domElement
 
