@@ -1,0 +1,27 @@
+{
+  "name": "@thesystemcollective/gamejam2022",
+  "version": "1.0.0",
+  "description": "SystemKollektiv gamejam 2022 entry game.",
+  "type": "module",
+  "scripts": {
+    "dev": "build/bin.js --serve true",
+    "build": "build/bin.js --prod true",
+    "format": "f -w"
+  },
+  "keywords": [
+    "game",
+    "vr",
+    "mindbending"
+  ],
+  "author": "SystemKollektiv",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "three": "0.137.0"
+  },
+  "devDependencies": {
+    "@grundstein/gss": "0.0.12",
+    "@magic/cli": "0.0.39",
+    "@magic/format": "0.0.38",
+    "esbuild": "0.14.14"
+  }
+}
