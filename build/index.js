@@ -27,11 +27,15 @@ export const run = async conf => {
   const outDir = path.join(process.cwd(), 'docs')
   const outfile = path.join(outDir, 'index.js')
 
+  await fs.rmrf(outDir)
+
+  await fs.mkdirp(outDir)
+
   const esbuildConfig = {
     entryPoints: [entry],
     bundle: true,
     minify: conf.prod !== false,
-    sourcemap: true,
+    sourcemap: conf.prod === false,
     outfile,
   }
 
