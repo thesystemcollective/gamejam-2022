@@ -63,7 +63,7 @@ class Engine {
 
   createScene() {
     const scene = new THREE.Scene()
-    const fog = new THREE.FogExp2(0x5D26FF, 0.01)
+    const fog = new THREE.FogExp2(0x5d26ff, 0.01)
     scene.fog = fog
 
     this.scene = scene
@@ -235,7 +235,6 @@ class Engine {
     // should be attached to the object returned from getControllerGrip in
     // order to match the orientation of the held device.
 
-
     this.controller1 = controller1
     this.controller2 = controller2
   }
@@ -310,7 +309,6 @@ class Engine {
 
   renderController({ time, controller }) {
     if (controller.userData.isSelecting) {
-
       if (this.nextShotTime < time) {
         this.lastShotId += 1
 
