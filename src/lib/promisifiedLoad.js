@@ -11,7 +11,6 @@ export const promisifiedLoad = ({ loader, file }) =>
       // if (xhr.lengthComputable) {
       //   const loadPercent = Math.ceil((xhr.loaded / xhr.total) * 100)
       //   loadPercentString = `${loadPercent}% `
-
       //   totalString = `/${xhr.total}`
       // }
     }

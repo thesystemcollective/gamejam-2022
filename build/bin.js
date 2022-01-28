@@ -21,7 +21,7 @@ const { args } = cli({
       '--out': 'dest directory',
       '--port': 'port to serve from',
       '--prod': 'create production build',
-      '--serve': 'serve the bundled files'
+      '--serve': 'serve the bundled files',
     },
     example: `
 build/bin.js --in src --out docs --port 8000 --prod true

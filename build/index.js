@@ -7,15 +7,17 @@ import gss from '@grundstein/gss'
 const copyStaticFiles = async ({ inDir, outDir }) => {
   const files = await fs.getFiles(path.join(inDir, 'static'))
 
-  await Promise.all(files.map(async file => {
-    const content = await fs.readFile(file)
+  await Promise.all(
+    files.map(async file => {
+      const content = await fs.readFile(file)
 
-    const basename = path.basename(file)
+      const basename = path.basename(file)
 
-    const outFile = path.join(outDir, basename)
+      const outFile = path.join(outDir, basename)
 
-    await fs.writeFile(outFile, content)
-  }))
+      await fs.writeFile(outFile, content)
+    }),
+  )
 
   return files
 }

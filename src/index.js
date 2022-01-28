@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory';
+import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory'
 
 import { pointOnCircle, promisifiedLoad, shuffleArray, VRButton } from './lib/index.js'
 
@@ -35,7 +35,7 @@ class Engine {
 
     this.createLights()
 
-    this.createSkybox({ color: 0x343E62, layer: 1 })
+    this.createSkybox({ color: 0x343e62, layer: 1 })
     this.createSkybox({ color: 0xff0057, layer: 2 })
 
     this.createVRButton()
@@ -199,10 +199,10 @@ class Engine {
   createControllers() {
     const { renderer, scene } = this
 
-    const controller1 = renderer.xr.getController(0);
-    controller1.addEventListener('selectstart', this.onSelectStart.bind(this));
-    controller1.addEventListener('selectend', this.onSelectEnd.bind(this));
-    controller1.addEventListener('connected', (event) => {
+    const controller1 = renderer.xr.getController(0)
+    controller1.addEventListener('selectstart', this.onSelectStart.bind(this))
+    controller1.addEventListener('selectend', this.onSelectEnd.bind(this))
+    controller1.addEventListener('connected', event => {
       controller1.add(this.buildController(event.data))
     })
 
@@ -215,12 +215,12 @@ class Engine {
     const controller2 = renderer.xr.getController(1)
     controller2.addEventListener('selectstart', this.onSelectStart.bind(this))
     controller2.addEventListener('selectend', this.onSelectEnd.bind(this))
-    controller2.addEventListener('connected', (event) => {
+    controller2.addEventListener('connected', event => {
       controller2.add(this.buildController(event.data))
-    });
+    })
 
     controller2.addEventListener('disconnected', () => {
-      controller2.remove(this.children[0]);
+      controller2.remove(this.children[0])
     })
 
     scene.add(controller2)
@@ -256,19 +256,21 @@ class Engine {
     const { targetRayMode } = data
 
     if (targetRayMode === 'tracked-pointer') {
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, - 1], 3));
-      geometry.setAttribute('color', new THREE.Float32BufferAttribute([0.5, 0.5, 0.5, 0, 0, 0], 3));
+      const geometry = new THREE.BufferGeometry()
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, -1], 3))
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute([0.5, 0.5, 0.5, 0, 0, 0], 3))
 
-      const material = new THREE.LineBasicMaterial({ vertexColors: true, blending: THREE.AdditiveBlending });
+      const material = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        blending: THREE.AdditiveBlending,
+      })
       return new THREE.Line(geometry, material)
     } else if (targetRayMode === 'gaze') {
-      const geometry = new THREE.RingGeometry(0.02, 0.04, 32).translate(0, 0, - 1);
-      const material = new THREE.MeshBasicMaterial({ opacity: 0.5, transparent: true });
-      return new THREE.Mesh(geometry, material);
+      const geometry = new THREE.RingGeometry(0.02, 0.04, 32).translate(0, 0, -1)
+      const material = new THREE.MeshBasicMaterial({ opacity: 0.5, transparent: true })
+      return new THREE.Mesh(geometry, material)
     }
   }
-
 
   // createCubes() {
   //   const geo = new THREE.BoxBufferGeometry(1, 1, 1)
