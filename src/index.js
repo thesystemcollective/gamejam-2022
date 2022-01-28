@@ -1,9 +1,8 @@
 import * as THREE from 'three'
 
-import { VRButton } from './VRButton.js'
-
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { promisifiedLoad } from './promisifiedLoad.js'
+
+import { pointOnCircle, promisifiedLoad, shuffleArray, VRButton } from './lib/index.js'
 
 class Engine {
   constructor() {
