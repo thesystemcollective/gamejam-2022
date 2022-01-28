@@ -19,8 +19,8 @@ class Engine {
     const loader = new GLTFLoader()
 
     const assets = {
-      env: await promisifiedLoad({ loader, file: '/env.glb' }),
-      hit: await promisifiedLoad({ loader, file: '/assets.glb' }),
+      env: await promisifiedLoad({ loader, file: 'env.glb' }),
+      hit: await promisifiedLoad({ loader, file: 'assets.glb' }),
     }
 
     this.loading.classList.add('hidden')
