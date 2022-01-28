@@ -2,164 +2,191 @@ import * as THREE from 'three'
 
 import { VRButton } from './VRButton.js'
 
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { promisifiedLoad } from './promisifiedLoad.js'
+
 class Engine {
   constructor() {
+    this.gui = document.getElementById('gui')
+
+    this.loading = document.getElementById('loading')
+    this.loading.classList.remove('hidden')
+
+    this.VRButton = document.getElementById('VRButton')
   }
 
   async init() {
-    if (navigator.xr) {
-      // If the device allows creation of exclusive sessions set it as the
-      // target of the 'Enter XR' button.
-      const supported = await navigator.xr.isSessionSupported('immersive-vr')
-      this.XR = supported
+    const loader = new GLTFLoader()
+
+    const assets = {
+      env: await promisifiedLoad({ loader, file: '/env.glb' }),
+      hit: await promisifiedLoad({ loader, file: '/assets.glb' }),
     }
 
+    this.loading.classList.add('hidden')
+
+    this.createScene()
 
     this.createRenderer()
 
-    const render1 = this.createScene({ color: 'green' })
-    // const render2 = this.createScene({ color: 'red' })
+    this.createCamera()
 
-    this.cameraL = render1.camera
-    this.scene1 = render1.scene
-    // this.scene1.background = new THREE.Color('blue')
+    this.createLights()
 
-    // this.cameraR = render2.camera
-    // this.scene2 = render2.scene
+    this.createSkybox({ color: 0x343E62, layer: 1 })
+    this.createSkybox({ color: 0xD6F1FF, layer: 2 })
 
-    // Handle browser resize
+    this.createVRButton()
+
+    this.createEnvironment(assets)
+
+    // this.createCubes()
+
     window.addEventListener('resize', this.onWindowResize.bind(this), false)
 
-    const geo = new THREE.BoxBufferGeometry(1, 1, 1)
-    const mat1 = new THREE.MeshLambertMaterial({ color: 'red' })
-    const mat2 = new THREE.MeshLambertMaterial({ color: 'green' })
-
-    // Make a red model
-    const modelL = new THREE.Mesh(geo, mat1)
-    modelL.position.set(-0.034, 1.5, -10)
-    modelL.layers.set(1)
-    this.scene1.add(modelL)
-
-    // Make a green model
-    const modelR = new THREE.Mesh(geo, mat2)
-    modelR.position.set(0.034, 1.5, -10)
-    modelR.layers.set(2)
-    this.scene1.add(modelR)
-
-    this.modelL = modelL
-    this.modelR = modelR
-
-    document.body.appendChild(VRButton.createButton(this.renderer))
-    // this.addFullScreenButton()
-
-    // Set animation loop
     this.renderer.setAnimationLoop(this.render.bind(this))
   }
 
-  addFullScreenButton() {
-    const fullScreenButton = document.createElement('button')
-    fullScreenButton.innerText = 'Fullscreen'
-    fullScreenButton.addEventListener('click', this.requestFullscreen.bind(this))
-
-    fullScreenButton.style.position = 'fixed'
-    fullScreenButton.style.top = 0
-    fullScreenButton.style.padding = '1em'
-
-    document.body.appendChild(fullScreenButton)
-  }
-
-  createSkybox({ color, scene }) {
-    const mat = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
-
-    const geo = new THREE.SphereGeometry(100, 64, 64)
-    const skyBox = new THREE.Mesh(geo, mat)
-    scene.add(skyBox)
-  }
-
-  createScene({ color = 0x505050 }) {
-    // Make a new scene
+  createScene() {
     const scene = new THREE.Scene()
-    // Set background color of the scene to gray
-    // scene.background = new THREE.Color(color)
-
-    // Make a camera. note that far is set to 100, which is better for realworld sized environments
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200)
-    camera.position.set(0, 1.6, 0)
-    scene.add(camera)
-
-    // Add some lights
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
-    dirLight.position.set(1, 1, 1).normalize()
-    scene.add(dirLight)
-
-    const ambLight = new THREE.AmbientLight(0xffffff, 0.5)
-    scene.add(ambLight)
-
     scene.background = null
 
-    this.createSkybox({ color, scene })
-
-    return {
-      scene,
-      camera,
-    }
+    this.scene = scene
   }
 
   createRenderer() {
-    // Make a renderer that fills the screen
-    // const { cameraL, cameraR } = this
-
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(window.innerWidth, window.innerHeight)
-    // Turn on VR support
+
     renderer.xr.enabled = true
 
-    // Add canvas to the page
     document.body.appendChild(renderer.domElement)
 
     this.renderer = renderer
   }
 
+  createVRButton() {
+    const button = VRButton.createButton(this.renderer)
+
+    this.VRButton.classList.remove('hidden')
+
+    this.VRButton.appendChild(button)
+  }
+
+  createCamera() {
+    const fov = 50
+    const aspect = window.innerWidth / window.innerHeight
+    const near = 0.1
+    const far = 200
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
+
+    camera.position.set(0, 1.6, 0)
+
+    this.scene.add(camera)
+
+    this.camera = camera
+  }
+
+  createLights() {
+    const dirLight = new THREE.DirectionalLight(0xfffdd8, 0.9)
+    dirLight.position.set(1, 1, 1).normalize()
+
+    const ambLight = new THREE.AmbientLight(0xfffdd8, 0.9)
+
+    this.scene.add(dirLight, ambLight)
+  }
+
+  createSkybox({ color, layer }) {
+    const geo = new THREE.SphereGeometry(100, 64, 64)
+    const mat = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
+
+    const skyBox = new THREE.Mesh(geo, mat)
+
+    skyBox.layers.set(layer)
+
+    this.scene.add(skyBox)
+  }
+
+  createEnvironment(assets) {
+    const meshes = {}
+    const materials = {}
+    this.planets = []
+    this.tunnels = []
+
+    assets.env.scene.traverse(node => {
+      if (node.isMesh) {
+        if (node.name.endsWith('_over') || node.name.endsWith('_mat')) {
+          const name = node.name.replace('_over', '').replace('_mat', '')
+          materials[name] = node.material
+        } else {
+          meshes[node.name] = node
+        }
+      }
+    })
+
+    Object.entries(meshes).forEach(([name, mesh]) => {
+      const meshR = mesh
+      meshR.layers.set(2)
+      meshR.name = name + 'R'
+
+      const meshL = mesh.clone()
+      meshL.material = materials[name]
+      meshL.layers.set(1)
+      meshL.name = name + 'L'
+
+      if (name.startsWith('planet')) {
+        this.planets.push(meshL, meshR)
+      }
+
+      if (name.startsWith('tunnel')) {
+        this.tunnels.push(meshL, meshR)
+      }
+
+      this.scene.add(meshL, meshR)
+    })
+  }
+
+  createCubes() {
+    // const geo = new THREE.BoxBufferGeometry(1, 1, 1)
+    // const mat1 = new THREE.MeshLambertMaterial({ color: 'red' })
+    // const mat2 = new THREE.MeshLambertMaterial({ color: 'green' })
+
+    // const modelL = new THREE.Mesh(geo, mat1)
+    // modelL.position.set(0, 1.5, -10)
+    // modelL.layers.set(1)
+
+    // const modelR = new THREE.Mesh(geo, mat2)
+    // modelR.position.set(0, 1.5, -10)
+    // modelR.layers.set(2)
+
+    // this.scene.add(modelL, modelR)
+
+    // this.modelL = modelL
+    // this.modelR = modelR
+  }
+
   onWindowResize() {
-    this.cameraL.aspect = window.innerWidth / window.innerHeight
-    this.cameraL.updateProjectionMatrix()
+    this.camera.aspect = window.innerWidth / window.innerHeight
+    this.camera.updateProjectionMatrix()
     // this.cameraR.aspect = window.innerWidth / window.innerHeight
     // this.cameraR.updateProjectionMatrix()
     this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
-  async requestFullscreen() {
-    // if (this.XR) {
-    //   const session = await navigator.xr.requestSession('immersive-vr')
-    //   const refSpace = await session.requestReferenceSpace('local')
-
-    //   this.renderer.xr.setSession(session)
-    // }
-
-    const elem = this.renderer.domElement
-
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen()
-    } else if (elem.webkitRequestFullscreen) { /* Safari */
-      elem.webkitRequestFullscreen()
-    } else if (elem.msRequestFullscreen) { /* IE11 */
-      elem.msRequestFullscreen()
-    }
-
-    this.onWindowResize()
-  }
-
   render(time) {
-    const { renderer, modelL, modelR, scene1, cameraL } = this
+    const { camera, renderer, scene } = this
 
-    // Rotate the model
-    modelL.rotation.y = time / 1000
-    modelR.rotation.y = time / 1000
+    this.planets.forEach(planet => {
+      planet.rotation.y = time / 10_000
+    })
 
-    // Draw everything
-    renderer.render(scene1, cameraL)
+    this.tunnels.forEach(tunnel => {
+      tunnel.rotation.z = time / 300_000
+    })
+
+    renderer.render(scene, camera)
   }
 }
 
