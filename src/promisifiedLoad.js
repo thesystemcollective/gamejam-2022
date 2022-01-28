@@ -1,6 +1,10 @@
 // Load a resource, the Preload class handles notifications.
 export const promisifiedLoad = ({ loader, file }) =>
   new Promise((resolve, reject) => {
+    if (!file.startsWith('/') && !file.startsWith('http')) {
+      file = document.location.pathname + file
+    }
+
     const onProgress = xhr => {
       // let loadPercentString = ''
       // let totalString = ''
