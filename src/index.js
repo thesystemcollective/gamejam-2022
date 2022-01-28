@@ -34,7 +34,7 @@ class Engine {
     this.createLights()
 
     this.createSkybox({ color: 0x343E62, layer: 1 })
-    this.createSkybox({ color: 0xD6F1FF, layer: 2 })
+    this.createSkybox({ color: 0xff0057, layer: 2 })
 
     this.createVRButton()
 
