@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "build/bin.js --serve true",
-    "build": "build/bin.js --prod true",
+    "build": "build/bin.js --prod true && prepare-static-files",
     "format": "f -w"
   },
   "keywords": [
