@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "build/bin.js --serve true",
     "build": "build/bin.js --prod true && prepare-static-files",
-    "format": "f -w"
+    "format": "f -w --exclude docs"
   },
   "keywords": [
     "game",
