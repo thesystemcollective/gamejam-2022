@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@grundstein/gss": "0.0.12",
+    "@grundstein/prepare-static-files": "0.0.5",
     "@magic/cli": "0.0.39",
     "@magic/format": "0.0.38",
     "esbuild": "0.14.14"
