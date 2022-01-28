@@ -6,6 +6,8 @@
   <title>Title</title>
   <style type="text/css">
     body {
+      width: 100%;
+      overflow: hidden;
       margin: 0;
       background-color: #000;
     }
@@ -13,10 +15,41 @@
     canvas {
       display: block;
     }
+
+    #gui {
+      display: grid;
+      color: white;
+      height: 100vh;
+    }
+
+    #gui div {
+      display: grid;
+      align-items: center;
+      justify-items: center;
+    }
+
+    #gui .hidden {
+      display: none;
+    }
+
+    #gui #VRButton {
+      color: white;
+      background: black;
+      padding: 1em;
+    }
+
+    #gui #VRButtonMessage {
+      color: white;
+    }
   </style>
 </head>
 
 <body>
+  <div id="gui">
+    <div id="loading">loading ...</div>
+    <div id="VRButton" class="hidden"></div>
+  </div>
+
   <script type="module" src="index.js"></script>
 </body>
 
