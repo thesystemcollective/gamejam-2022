@@ -15,6 +15,15 @@ class Engine {
     this.VRButton = document.getElementById('VRButton')
 
     this.clock = new THREE.Clock()
+
+    this.lastShotId = 0
+    this.shotVec = new THREE.Vector3()
+    this.nextShotTime = -1
+
+    this.onSelectEnd = this.onSelectEnd.bind(this)
+    this.onSelectStart = this.onSelectStart.bind(this)
+    this.onWindowResize = this.onWindowResize.bind(this)
+    this.render = this.render.bind(this)
   }
 
   async init() {
@@ -44,16 +53,18 @@ class Engine {
     this.createEnvironment(assets)
     this.createBackgroundFloaters(assets)
 
-    window.addEventListener('resize', this.onWindowResize.bind(this), false)
+    window.addEventListener('resize', this.onWindowResize, false)
 
     this.createControllers()
+    this.createShots()
 
-    this.renderer.setAnimationLoop(this.render.bind(this))
+    this.renderer.setAnimationLoop(this.render)
   }
 
   createScene() {
     const scene = new THREE.Scene()
-    scene.background = null
+    const fog = new THREE.FogExp2(0x5D26FF, 0.01)
+    scene.fog = fog
 
     this.scene = scene
   }
@@ -152,6 +163,16 @@ class Engine {
     })
   }
 
+  renderEnvironment(time) {
+    this.planets.forEach(planet => {
+      planet.rotation.y = time / 10_000
+    })
+
+    this.tunnels.forEach(tunnel => {
+      tunnel.rotation.z = time / 300_000
+    })
+  }
+
   createBackgroundFloaters(assets) {
     const parent = assets.hit.scene.getObjectByName('bg')
 
@@ -197,31 +218,15 @@ class Engine {
   }
 
   createControllers() {
-    const { renderer, scene } = this
+    const { scene } = this
 
-    const controller1 = renderer.xr.getController(0)
-    controller1.addEventListener('selectstart', this.onSelectStart.bind(this))
-    controller1.addEventListener('selectend', this.onSelectEnd.bind(this))
-    controller1.addEventListener('connected', event => {
-      controller1.add(this.buildController(event.data))
-    })
+    const controllerModelFactory = new XRControllerModelFactory()
 
-    controller1.addEventListener('disconnected', () => {
-      controller1.remove(controller1.children[0])
-    })
+    const controller1 = this.createControl(0, controllerModelFactory)
 
     scene.add(controller1)
 
-    const controller2 = renderer.xr.getController(1)
-    controller2.addEventListener('selectstart', this.onSelectStart.bind(this))
-    controller2.addEventListener('selectend', this.onSelectEnd.bind(this))
-    controller2.addEventListener('connected', event => {
-      controller2.add(this.buildController(event.data))
-    })
-
-    controller2.addEventListener('disconnected', () => {
-      controller2.remove(this.children[0])
-    })
+    const controller2 = this.createControl(1, controllerModelFactory)
 
     scene.add(controller2)
 
@@ -230,26 +235,56 @@ class Engine {
     // should be attached to the object returned from getControllerGrip in
     // order to match the orientation of the held device.
 
-    const controllerModelFactory = new XRControllerModelFactory()
-
-    const controllerGrip1 = renderer.xr.getControllerGrip(0)
-    controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1))
-    scene.add(controllerGrip1)
-
-    const controllerGrip2 = renderer.xr.getControllerGrip(1)
-    controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2))
-    scene.add(controllerGrip2)
 
     this.controller1 = controller1
     this.controller2 = controller2
   }
 
-  onSelectStart(e) {
-    console.log({ e })
+  createControl(id, controllerModelFactory) {
+    const { renderer } = this
+
+    const controller = renderer.xr.getController(id)
+    controller.userData.isSelecting = false
+    controller.addEventListener('selectstart', e => this.onSelectStart({ e, controller }))
+    controller.addEventListener('selectend', e => this.onSelectEnd({ e, controller }))
+    controller.addEventListener('connected', event => {
+      controller.add(this.buildController(event.data))
+    })
+
+    controller.addEventListener('disconnected', () => {
+      controller.remove(controller.children[0])
+    })
+
+    const grip = renderer.xr.getControllerGrip(id)
+    grip.add(controllerModelFactory.createControllerModel(grip))
+    scene.add(grip)
+
+    return controller
   }
 
-  onSelectEnd(e) {
-    console.log({ e })
+  createShots() {
+    this.shots = []
+
+    for (let i = 0; i < 100; i++) {
+      const geo = new THREE.SphereGeometry(0.1, 32, 32)
+      const mat = new THREE.MeshBasicMaterial({ color: 'orange' })
+      const shot = new THREE.Mesh(geo, mat)
+      shot.position.x = 10000
+
+      shot.userData.velocity = new THREE.Vector3()
+
+      this.scene.add(shot)
+
+      this.shots.push(shot)
+    }
+  }
+
+  onSelectStart({ controller }) {
+    controller.userData.isSelecting = true
+  }
+
+  onSelectEnd({ controller }) {
+    controller.userData.isSelecting = false
   }
 
   buildController(data) {
@@ -264,6 +299,7 @@ class Engine {
         vertexColors: true,
         blending: THREE.AdditiveBlending,
       })
+
       return new THREE.Line(geometry, material)
     } else if (targetRayMode === 'gaze') {
       const geometry = new THREE.RingGeometry(0.02, 0.04, 32).translate(0, 0, -1)
@@ -272,24 +308,41 @@ class Engine {
     }
   }
 
-  // createCubes() {
-  //   const geo = new THREE.BoxBufferGeometry(1, 1, 1)
-  //   const mat1 = new THREE.MeshLambertMaterial({ color: 'red' })
-  //   const mat2 = new THREE.MeshLambertMaterial({ color: 'green' })
+  renderController({ time, controller }) {
+    if (controller.userData.isSelecting) {
 
-  //   const modelL = new THREE.Mesh(geo, mat1)
-  //   modelL.position.set(0, 1.5, -10)
-  //   modelL.layers.set(1)
+      if (this.nextShotTime < time) {
+        this.lastShotId += 1
 
-  //   const modelR = new THREE.Mesh(geo, mat2)
-  //   modelR.position.set(0, 1.5, -10)
-  //   modelR.layers.set(2)
+        if (this.lastShotId >= this.shots.length) {
+          this.lastShotId = 0
+        }
 
-  //   this.scene.add(modelL, modelR)
+        this.nextShotTime = time + 1000
 
-  //   this.modelL = modelL
-  //   this.modelR = modelR
-  // }
+        const object = this.shots[this.lastShotId]
+
+        const position = controller.position.clone()
+        position.z -= 1
+        position.applyQuaternion(controller.quaternion)
+        object.position.copy(position)
+
+        object.userData.velocity = new THREE.Vector3(0, 0, -1)
+
+        object.userData.velocity.applyQuaternion(controller.quaternion)
+      }
+    }
+  }
+
+  renderShots(delta) {
+    this.shots.forEach(shot => {
+      this.shotVec.x = shot.userData.velocity.x * delta
+      this.shotVec.y = shot.userData.velocity.y * delta
+      this.shotVec.z = shot.userData.velocity.z * delta
+
+      shot.position.add(this.shotVec)
+    })
+  }
 
   onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight
@@ -303,13 +356,11 @@ class Engine {
 
     const delta = clock.getDelta()
 
-    this.planets.forEach(planet => {
-      planet.rotation.y = time / 10_000
-    })
+    this.renderController({ delta, time, controller: this.controller1 })
+    this.renderController({ delta, time, controller: this.controller2 })
+    this.renderShots(delta)
 
-    this.tunnels.forEach(tunnel => {
-      tunnel.rotation.z = time / 300_000
-    })
+    this.renderEnvironment(time)
 
     this.bgItems.forEach(({ node, speed, pos }) => {
       if (node.position.z > 100) {
