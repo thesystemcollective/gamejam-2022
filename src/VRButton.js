@@ -1,14 +1,8 @@
 class VRButton {
 
-  static createButton(renderer, options) {
-
-    if (options) {
-
-      console.error('THREE.VRButton: The "options" parameter has been removed. Please set the reference space type via renderer.xr.setReferenceSpaceType() instead.');
-
-    }
-
-    const button = document.createElement('button');
+  static createButton(renderer) {
+    const button = document.createElement('button')
+    button.id = 'VRButton'
 
     function showEnterVR( /*device*/) {
 
@@ -35,27 +29,7 @@ class VRButton {
 
       }
 
-      //
-
-      button.style.display = '';
-
-      button.style.cursor = 'pointer';
-      button.style.left = 'calc(50% - 50px)';
-      button.style.width = '100px';
-
       button.textContent = 'ENTER VR';
-
-      button.onmouseenter = function () {
-
-        button.style.opacity = '1.0';
-
-      };
-
-      button.onmouseleave = function () {
-
-        button.style.opacity = '0.5';
-
-      };
 
       button.onclick = function () {
 
@@ -82,12 +56,7 @@ class VRButton {
     }
 
     function disableButton() {
-
-      button.style.display = '';
-
-      button.style.cursor = 'auto';
-      button.style.left = 'calc(50% - 75px)';
-      button.style.width = '150px';
+      button.classList.add('disabled')
 
       button.onmouseenter = null;
       button.onmouseleave = null;
@@ -104,88 +73,41 @@ class VRButton {
 
     }
 
-    function stylizeElement(element) {
-
-      element.style.position = 'absolute';
-      element.style.bottom = '20px';
-      element.style.padding = '12px 6px';
-      element.style.border = '1px solid #fff';
-      element.style.borderRadius = '4px';
-      element.style.background = 'rgba(0,0,0,0.1)';
-      element.style.color = '#fff';
-      element.style.font = 'normal 13px sans-serif';
-      element.style.textAlign = 'center';
-      element.style.opacity = '0.5';
-      element.style.outline = 'none';
-      element.style.zIndex = '999';
-
-    }
-
     if ('xr' in navigator) {
-
-      button.id = 'VRButton';
-      button.style.display = 'none';
-
-      stylizeElement(button);
-
       navigator.xr.isSessionSupported('immersive-vr').then(function (supported) {
-
         supported ? showEnterVR() : showWebXRNotFound();
 
         if (supported && VRButton.xrSessionIsGranted) {
-
           button.click();
-
         }
-
       });
 
-      return button;
-
+      return button
     } else {
-
-      const message = document.createElement('a');
+      const message = document.createElement('a')
+      message.id = "VRButtonMessage"
 
       if (window.isSecureContext === false) {
-
         message.href = document.location.href.replace(/^http:/, 'https:');
         message.innerHTML = 'WEBXR NEEDS HTTPS'; // TODO Improve message
-
       } else {
-
         message.href = 'https://immersiveweb.dev/';
         message.innerHTML = 'WEBXR NOT AVAILABLE';
-
       }
 
-      message.style.left = 'calc(50% - 90px)';
-      message.style.width = '180px';
-      message.style.textDecoration = 'none';
-
-      stylizeElement(message);
-
       return message;
-
     }
-
   }
 
   static xrSessionIsGranted = false;
 
   static registerSessionGrantedListener() {
-
     if ('xr' in navigator) {
-
       navigator.xr.addEventListener('sessiongranted', () => {
-
         VRButton.xrSessionIsGranted = true;
-
-      });
-
+      })
     }
-
   }
-
 }
 
 VRButton.registerSessionGrantedListener();
