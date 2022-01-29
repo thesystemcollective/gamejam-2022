@@ -90,6 +90,9 @@ class Engine {
 
     this.loading.classList.add('hidden')
 
+    const imgLoader = new THREE.TextureLoader()
+    this.skybox = await promisifiedLoad({ loader: imgLoader, file: 'skybox.jpg' })
+
     this.createScene()
     this.createRenderer()
     this.createCamera()
@@ -102,6 +105,7 @@ class Engine {
 
     this.createSkybox({ color: 0x343e62, layer: 1 })
     this.createSkybox({ color: 0xff0057, layer: 2 })
+    this.createPMREM()
 
     this.createVRButton()
 
@@ -125,6 +129,8 @@ class Engine {
 
   createRenderer() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+
+    renderer.outputEncoding = THREE.sRGBEncoding
 
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(window.innerWidth, window.innerHeight)
@@ -184,12 +190,23 @@ class Engine {
   }
 
   createLights() {
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2)
-    dirLight.position.set(1, 10, 10)
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5)
+    dirLight.position.set(1, 10, -10)
+    dirLight.layers.set(2)
 
-    const ambLight = new THREE.AmbientLight(0xffffff, 2)
+    const ambLight = new THREE.AmbientLight(0xffffff, 1.5)
 
     this.scene.add(dirLight, ambLight)
+  }
+
+  createPMREM() {
+    const pmremGenerator = new THREE.PMREMGenerator(this.renderer)
+    pmremGenerator.compileEquirectangularShader()
+
+    const envMap = pmremGenerator.fromEquirectangular(this.skybox).texture
+
+    this.scene.environment = envMap
+    pmremGenerator.dispose()
   }
 
   createSkybox({ color, layer }) {
