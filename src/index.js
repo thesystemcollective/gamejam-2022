@@ -194,7 +194,7 @@ class Engine {
 
   createSkybox({ color, layer }) {
     const geo = new THREE.SphereGeometry(100, 64, 64)
-    const mat = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
+    const mat = new THREE.MeshPhongMaterial({ color, side: THREE.BackSide })
 
     const skyBox = new THREE.Mesh(geo, mat)
 
@@ -315,7 +315,6 @@ class Engine {
       clickable.position.x = Math.random() * dir
       clickable.position.y = 1.2 + Math.random() * dir
       clickable.position.z = -12
-      clickable.visible = true
 
       this.spawnedClickables.push(clickable)
 
