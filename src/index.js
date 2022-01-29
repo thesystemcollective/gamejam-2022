@@ -184,17 +184,17 @@ class Engine {
   }
 
   createLights() {
-    const dirLight = new THREE.DirectionalLight(0xfffdd8, 2)
-    dirLight.position.set(1, 1, 1).normalize()
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2)
+    dirLight.position.set(1, 10, 10)
 
-    const ambLight = new THREE.AmbientLight(0xfffdd8, 2)
+    const ambLight = new THREE.AmbientLight(0xffffff, 2)
 
     this.scene.add(dirLight, ambLight)
   }
 
   createSkybox({ color, layer }) {
     const geo = new THREE.SphereGeometry(100, 64, 64)
-    const mat = new THREE.MeshPhongMaterial({ color, side: THREE.BackSide })
+    const mat = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
 
     const skyBox = new THREE.Mesh(geo, mat)
 
