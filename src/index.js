@@ -24,6 +24,26 @@ const config = {
   },
 }
 
+class Player {
+  constructor(engine) {
+    this.engine = engine
+
+    this.score = 0
+    this.lives = 3
+  }
+
+  addScore(val) {
+    this.score += val
+  }
+
+  getHit() {
+    this.lives -= 1
+    if (this.lives === 0) {
+      this.engine.gameOver()
+    }
+  }
+}
+
 class Engine {
   constructor() {
     this.gui = document.getElementById('gui')
@@ -43,7 +63,12 @@ class Engine {
     this.currentClickableId = 0
     this.spawnedClickables = []
 
-    this.onSelectEnd = this.onSelectEnd.bind(this)
+    this.tempMatrix = new THREE.Matrix4()
+
+    this.player = new Player(this)
+
+    this.audioElement = document.getElementById('audio-ambient')
+
     this.onSelectStart = this.onSelectStart.bind(this)
     this.onWindowResize = this.onWindowResize.bind(this)
     this.render = this.render.bind(this)
@@ -57,6 +82,11 @@ class Engine {
       hit: await promisifiedLoad({ loader, file: 'assets.glb' }),
     }
 
+    // load a sound and set it as the Audio object's buffer
+    const audioLoader = new THREE.AudioLoader();
+
+    this.buffer = await promisifiedLoad({ loader: audioLoader, file: 'music/gameoverreplay.mp3' })
+
     this.loading.classList.add('hidden')
 
     this.createScene()
@@ -64,6 +94,8 @@ class Engine {
     this.createCamera()
     this.createLights()
     this.createFog()
+
+    this.createInitAudio()
 
     this.createSkybox({ color: 0x343e62, layer: 1 })
     this.createSkybox({ color: 0xff0057, layer: 2 })
@@ -77,9 +109,6 @@ class Engine {
     window.addEventListener('resize', this.onWindowResize, false)
 
     this.createControllers()
-    this.createShots()
-
-    this.renderer.setAnimationLoop(this.render)
   }
 
   createScene() {
@@ -106,7 +135,7 @@ class Engine {
   }
 
   createVRButton() {
-    const button = VRButton.createButton(this.renderer)
+    const button = VRButton.createButton(this)
 
     this.VRButton.classList.remove('hidden')
 
@@ -125,6 +154,21 @@ class Engine {
     this.scene.add(camera)
 
     this.camera = camera
+  }
+
+  createInitAudio() {
+    // create an AudioListener and add it to the camera
+    const listener = new THREE.AudioListener()
+    this.camera.add(listener)
+
+    // create a global audio source
+    const sound = new THREE.Audio(listener)
+
+    sound.setBuffer(this.buffer);
+    sound.setLoop(true)
+    sound.setVolume(0.5)
+
+    this.sound = sound
   }
 
   createLights() {
@@ -198,55 +242,18 @@ class Engine {
     })
   }
 
-  // createBgItems(assets) {
-  //   const parent = assets.hit.scene.getObjectByName('bg')
-
-  //   const bgItems = []
-
-  //   parent.traverse(node => {
-  //     for (let i = 0; i < 20; i++) {
-  //       const newNode = node.clone()
-
-  //       // 150 to 180 meters from the player
-  //       const distanceZ = -1 * (Math.random() * 150)
-
-  //       const pos = pointOnCircle(10)
-
-  //       newNode.position.set(pos.x, pos.y, distanceZ)
-
-  //       // 0.05 - 0.1 movement speed
-  //       const speed = Math.random() * 0.5 + 0.5
-
-  //       const layer = (i % 2) + 1
-  //       newNode.layers.set(layer)
-
-  //       bgItems.push({ node: newNode, pos: distanceZ, speed })
-
-  //       this.scene.add(newNode)
-  //     }
-  //   })
-
-  //   this.bgItems = bgItems
-  // }
-
-  // renderBgItems(delta) {
-  //   this.bgItems.forEach(({ node, speed, pos }) => {
-  //     if (node.position.z > 100) {
-  //       node.position.z = pos
-  //     } else {
-  //       node.position.z += speed * delta
-  //     }
-  //   })
-  // }
-
   createClickables(assets) {
+    const clickableParent = new THREE.Object3D()
+    clickableParent.name = 'clickableParent'
+    this.clickableParent = clickableParent
+
     const clickables = []
 
     const L = assets.hit.scene.getObjectByName('hit_L')
     const R = assets.hit.scene.getObjectByName('hit_R')
 
     const children = []
-    L.children.forEach(nodeL => {
+    L.traverse(nodeL => {
       const name = nodeL.name.replace('_L', '_R')
       const nodeR = R.getObjectByName(name)
 
@@ -270,16 +277,21 @@ class Engine {
 
         clone.position.x = 10_000
 
-        this.scene.add(clone)
+        clickableParent.add(clone)
       }
     })
 
     this.clickables = shuffleArray(clickables)
+    this.scene.add(clickableParent)
   }
 
   renderClickables({ delta, time }) {
     this.spawnedClickables.forEach(clickable => {
-      clickable.position.z += delta * config.clickable.speedMultiplier
+      if (clickable.position.z < -1.2) {
+        clickable.position.z += delta * config.clickable.speedMultiplier
+      } else {
+        this.score = 0
+      }
     })
 
     if (this.nextClickableTime < time) {
@@ -291,6 +303,7 @@ class Engine {
       clickable.position.x = Math.random() * dir
       clickable.position.y = 1.6 + Math.random() * dir
       clickable.position.z = -12
+      clickable.visible = true
 
       this.spawnedClickables.push(clickable)
 
@@ -322,9 +335,7 @@ class Engine {
     const { renderer, scene } = this
 
     const controller = renderer.xr.getController(id)
-    controller.userData.isSelecting = false
-    controller.addEventListener('selectstart', e => this.onSelectStart({ e, controller }))
-    controller.addEventListener('selectend', e => this.onSelectEnd({ e, controller }))
+    controller.addEventListener('selectstart', this.onSelectStart)
     controller.addEventListener('connected', event => {
       controller.add(this.buildController(event.data))
     })
@@ -340,16 +351,31 @@ class Engine {
     return controller
   }
 
-  onSelectStart({ controller }) {
-    controller.userData.isSelecting = true
-  }
+  onSelectStart(e) {
+    const controller = e.target
 
-  onSelectEnd({ controller }) {
-    controller.userData.isSelecting = false
+    this.tempMatrix.identity().extractRotation(controller.matrixWorld);
+
+    this.raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+    this.raycaster.ray.direction.set(0, 0, - 1).applyMatrix4(this.tempMatrix);
+
+    const intersections = this.raycaster.intersectObjects(this.scene.children, true)
+
+    intersections.forEach(intersection => {
+      const { distance, object } = intersection
+      if (object.name.startsWith('hit')) {
+        object.visible = false
+      }
+    })
   }
 
   buildController(data) {
     const { targetRayMode } = data
+    this.targetRayMode = targetRayMode
+
+    this.raycaster = new THREE.Raycaster()
+    this.raycaster.layers.enable(1)
+    this.raycaster.layers.enable(2)
 
     if (targetRayMode === 'tracked-pointer') {
       const geometry = new THREE.BufferGeometry()
@@ -363,62 +389,31 @@ class Engine {
 
       return new THREE.Line(geometry, material)
     } else if (targetRayMode === 'gaze') {
+      this.arrow = new THREE.ArrowHelper(this.raycaster.ray.direction, this.ra)
+
       const geometry = new THREE.RingGeometry(0.02, 0.04, 32).translate(0, 0, -1)
       const material = new THREE.MeshBasicMaterial({ opacity: 0.5, transparent: true })
       return new THREE.Mesh(geometry, material)
     }
   }
 
-  renderController({ time, controller }) {
-    if (controller.userData.isSelecting) {
-      if (this.nextShotTime < time) {
-        this.nextShotTime = time + config.player.reload
+  startGame(session) {
+    this.session = session
+    this.renderer.setAnimationLoop(this.render)
 
-        this.lastShotId += 1
+    this.sound.play()
 
-        if (this.lastShotId >= this.shots.length) {
-          this.lastShotId = 0
-        }
-
-        const object = this.shots[this.lastShotId]
-
-        const position = controller.position.clone()
-        position.z -= 1
-        position.applyQuaternion(controller.quaternion)
-        object.position.copy(position)
-
-        object.userData.velocity = new THREE.Vector3(0, 0, -1)
-
-        object.userData.velocity.applyQuaternion(controller.quaternion)
-      }
-    }
+    setTimeout(() => {
+      this.sound.setVolume(0.3)
+      this.audioElement.play()
+    }, 2000)
   }
 
-  createShots() {
-    this.shots = []
-
-    for (let i = 0; i < config.spawnCounts.shots; i++) {
-      const geo = new THREE.SphereGeometry(0.1, 32, 32)
-      const mat = new THREE.MeshBasicMaterial({ color: 'orange' })
-      const shot = new THREE.Mesh(geo, mat)
-      shot.position.x = 10000
-
-      shot.userData.velocity = new THREE.Vector3()
-
-      this.scene.add(shot)
-
-      this.shots.push(shot)
-    }
-  }
-
-  renderShots(delta) {
-    this.shots.forEach(shot => {
-      this.shotVec.x = shot.userData.velocity.x * delta
-      this.shotVec.y = shot.userData.velocity.y * delta
-      this.shotVec.z = shot.userData.velocity.z * delta
-
-      shot.position.add(this.shotVec)
-    })
+  gameOver() {
+    console.error("GAAAME OVER")
+    // dissolve all hit items
+    // spawn game over / replay screen
+    // add buttons for "replay" and "game over"
   }
 
   onWindowResize() {
@@ -432,11 +427,6 @@ class Engine {
     const { camera, clock, renderer, scene, lastSpawnTime = 0 } = this
 
     const delta = clock.getDelta()
-
-    this.renderController({ delta, time, controller: this.controller1 })
-    this.renderController({ delta, time, controller: this.controller2 })
-
-    this.renderShots(delta)
 
     // this.renderBgItems(delta)
     this.renderEnvironment(time)
