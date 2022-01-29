@@ -18,8 +18,9 @@ const config = {
 
   // how much time should between clickale spawns
   clickable: {
-    maxSpawnTime: 100,
-    addSpawnTime: 500,
+    maxSpawnTime: 500,
+    addSpawnTime: 1000,
+    speedMultiplier: 0.5,
   }
 }
 
@@ -39,7 +40,8 @@ class Engine {
     this.nextShotTime = -1
 
     this.nextClickableTime = 1000
-    this.lastClickableId = 0
+    this.currentClickableId = 0
+    this.spawnedClickables = []
 
     this.onSelectEnd = this.onSelectEnd.bind(this)
     this.onSelectStart = this.onSelectStart.bind(this)
@@ -174,6 +176,7 @@ class Engine {
       }
 
       if (name.startsWith('tunnel')) {
+        meshL.rotation.z = 3
         this.tunnels.push(meshL, meshR)
       }
 
@@ -235,40 +238,61 @@ class Engine {
   createClickables(assets) {
     const clickables = []
 
-    const replay = assets.hit.scene.getObjectByName('replay')
-    console.log(replay)
+    const L = assets.hit.scene.getObjectByName('hit_L')
+    const R = assets.hit.scene.getObjectByName('hit_R')
 
-    // assets.hit.scene.traverse(node => {
-    //   if (node.parent && node.parent.name && node.parent.name === 'replay') {
-    //     const name = node.name.replace('_replay', '_over')
-    //     console.log({ name })
-    //     const adjacent = assets.hit.scene.getObjectByName(name)
-    //     if (!adjacent) {
-    //       console.log('adjacent not found', name, adjacent, node)
-    //     }
-    //     const parent = new THREE.Object3D()
-    //     parent.add(node, adjacent)
+    const children = []
+    L.children.forEach(nodeL => {
+      const name = nodeL.name.replace('_L', '_R')
+      const nodeR = R.getObjectByName(name)
 
-    //     clickables.push(parent)
-    //   }
-    // })
+      nodeL.layers.set(1)
+      nodeR.layers.set(2)
 
-    // this.clickables = shuffleArray(clickables)
+      const group = [nodeL, nodeR]
+      children.push(group)
+    })
+
+    children.forEach(([nodeL, nodeR]) => {
+      const parent = new THREE.Object3D()
+      nodeL.position.set(0, 0, 0)
+      nodeR.position.set(0, 0, 0)
+      parent.add(nodeL, nodeR)
+      parent.name = nodeL.name.replace('_L', '')
+
+      for (let i = 0; i < 10; i++) {
+        const clone = parent.clone()
+        clickables.push(clone)
+
+        clone.position.x = 10_000
+
+        this.scene.add(clone)
+      }
+    })
+
+    this.clickables = shuffleArray(clickables)
   }
 
-  renderClickables() {
+  renderClickables({ delta, time }) {
     this.spawnedClickables.forEach(clickable => {
-      console.log({ clickable })
+      clickable.position.z += delta * config.clickable.speedMultiplier
     })
 
     if (this.nextClickableTime < time) {
       const { addSpawnTime, maxSpawnTime } = config.clickable
-      this.nextClickableTime = time + Math.random() * maxSpawnTime + addSpawnTime
+      this.nextClickableTime = time + (Math.random() * maxSpawnTime) + addSpawnTime
 
-      const clickable = this.clickables[this.lastClickableId]
-      console.log({ clickable })
+      const clickable = this.clickables[this.currentClickableId]
+      const dir = Math.random() > 0.5 ? 1 : -1
+      clickable.position.x = Math.random() * dir
+      clickable.position.z = -12
 
-      this.lastClickableId += 1
+      this.spawnedClickables.push(clickable)
+
+      this.currentClickableId += 1
+      if (this.currentClickableId >= this.clickables.length) {
+        this.currentClickableId = 0
+      }
     }
   }
 
@@ -411,6 +435,7 @@ class Engine {
 
     this.renderBgItems(delta)
     this.renderEnvironment(time)
+    this.renderClickables({ delta, time })
 
     renderer.render(scene, camera)
   }
