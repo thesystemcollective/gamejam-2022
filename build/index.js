@@ -39,15 +39,12 @@ export const run = async conf => {
     minify: conf.prod !== false,
     sourcemap: conf.prod === false,
     outfile,
+    watch: conf.serve !== false,
   }
 
   await esbuild.build(esbuildConfig)
 
   const files = await copyStaticFiles({ inDir, outDir })
-
-  // if (conf.prod === false) {
-
-  // }
 
   if (conf.serve) {
     gss({ ...conf, dir: outDir })
