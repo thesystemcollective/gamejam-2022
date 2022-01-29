@@ -63,6 +63,7 @@ class Engine {
     this.createRenderer()
     this.createCamera()
     this.createLights()
+    this.createFog()
 
     this.createSkybox({ color: 0x343e62, layer: 1 })
     this.createSkybox({ color: 0xff0057, layer: 2 })
@@ -70,7 +71,7 @@ class Engine {
     this.createVRButton()
 
     this.createEnvironment(assets)
-    this.createBgItems(assets)
+    // this.createBgItems(assets)
     this.createClickables(assets)
 
     window.addEventListener('resize', this.onWindowResize, false)
@@ -83,10 +84,12 @@ class Engine {
 
   createScene() {
     const scene = new THREE.Scene()
-    const fog = new THREE.FogExp2(0x5d26ff, 0.01)
-    scene.fog = fog
-
     this.scene = scene
+  }
+
+  createFog() {
+    const fog = new THREE.FogExp2(0x5d26ff, 0.02)
+    this.scene.fog = fog
   }
 
   createRenderer() {
@@ -195,46 +198,46 @@ class Engine {
     })
   }
 
-  createBgItems(assets) {
-    const parent = assets.hit.scene.getObjectByName('bg')
+  // createBgItems(assets) {
+  //   const parent = assets.hit.scene.getObjectByName('bg')
 
-    const bgItems = []
+  //   const bgItems = []
 
-    parent.traverse(node => {
-      for (let i = 0; i < 20; i++) {
-        const newNode = node.clone()
+  //   parent.traverse(node => {
+  //     for (let i = 0; i < 20; i++) {
+  //       const newNode = node.clone()
 
-        // 150 to 180 meters from the player
-        const distanceZ = -1 * (Math.random() * 150)
+  //       // 150 to 180 meters from the player
+  //       const distanceZ = -1 * (Math.random() * 150)
 
-        const pos = pointOnCircle(10)
+  //       const pos = pointOnCircle(10)
 
-        newNode.position.set(pos.x, pos.y, distanceZ)
+  //       newNode.position.set(pos.x, pos.y, distanceZ)
 
-        // 0.05 - 0.1 movement speed
-        const speed = Math.random() * 0.5 + 0.5
+  //       // 0.05 - 0.1 movement speed
+  //       const speed = Math.random() * 0.5 + 0.5
 
-        const layer = (i % 2) + 1
-        newNode.layers.set(layer)
+  //       const layer = (i % 2) + 1
+  //       newNode.layers.set(layer)
 
-        bgItems.push({ node: newNode, pos: distanceZ, speed })
+  //       bgItems.push({ node: newNode, pos: distanceZ, speed })
 
-        this.scene.add(newNode)
-      }
-    })
+  //       this.scene.add(newNode)
+  //     }
+  //   })
 
-    this.bgItems = bgItems
-  }
+  //   this.bgItems = bgItems
+  // }
 
-  renderBgItems(delta) {
-    this.bgItems.forEach(({ node, speed, pos }) => {
-      if (node.position.z > 100) {
-        node.position.z = pos
-      } else {
-        node.position.z += speed * delta
-      }
-    })
-  }
+  // renderBgItems(delta) {
+  //   this.bgItems.forEach(({ node, speed, pos }) => {
+  //     if (node.position.z > 100) {
+  //       node.position.z = pos
+  //     } else {
+  //       node.position.z += speed * delta
+  //     }
+  //   })
+  // }
 
   createClickables(assets) {
     const clickables = []
@@ -286,6 +289,7 @@ class Engine {
       const clickable = this.clickables[this.currentClickableId]
       const dir = Math.random() > 0.5 ? 1 : -1
       clickable.position.x = Math.random() * dir
+      clickable.position.y = 1.6 + Math.random() * dir
       clickable.position.z = -12
 
       this.spawnedClickables.push(clickable)
@@ -434,7 +438,7 @@ class Engine {
 
     this.renderShots(delta)
 
-    this.renderBgItems(delta)
+    // this.renderBgItems(delta)
     this.renderEnvironment(time)
     this.renderClickables({ delta, time })
 
