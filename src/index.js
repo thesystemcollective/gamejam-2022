@@ -5,6 +5,24 @@ import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerM
 
 import { pointOnCircle, promisifiedLoad, shuffleArray, VRButton } from './lib/index.js'
 
+const config = {
+  player: {
+    // time between shots
+    reload: 1000,
+  },
+
+  spawnCounts: {
+    // how many shot prefabs should be created
+    shots: 100,
+  },
+
+  // how much time should between clickale spawns
+  clickable: {
+    maxSpawnTime: 100,
+    addSpawnTime: 500,
+  }
+}
+
 class Engine {
   constructor() {
     this.gui = document.getElementById('gui')
@@ -16,9 +34,12 @@ class Engine {
 
     this.clock = new THREE.Clock()
 
-    this.lastShotId = 0
     this.shotVec = new THREE.Vector3()
+    this.lastShotId = 0
     this.nextShotTime = -1
+
+    this.nextClickableTime = 1000
+    this.lastClickableId = 0
 
     this.onSelectEnd = this.onSelectEnd.bind(this)
     this.onSelectStart = this.onSelectStart.bind(this)
@@ -37,11 +58,8 @@ class Engine {
     this.loading.classList.add('hidden')
 
     this.createScene()
-
     this.createRenderer()
-
     this.createCamera()
-
     this.createLights()
 
     this.createSkybox({ color: 0x343e62, layer: 1 })
@@ -49,9 +67,9 @@ class Engine {
 
     this.createVRButton()
 
-    this.createClickables(assets)
     this.createEnvironment(assets)
-    this.createBackgroundFloaters(assets)
+    this.createBgItems(assets)
+    this.createClickables(assets)
 
     window.addEventListener('resize', this.onWindowResize, false)
 
@@ -132,8 +150,8 @@ class Engine {
 
     assets.env.scene.traverse(node => {
       if (node.isMesh) {
-        if (node.name.endsWith('_over') || node.name.endsWith('_mat')) {
-          const name = node.name.replace('_over', '').replace('_mat', '')
+        if (node.name.endsWith('_over')) {
+          const name = node.name.replace('_over', '')
           materials[name] = node.material
         } else {
           meshes[node.name] = node
@@ -173,7 +191,7 @@ class Engine {
     })
   }
 
-  createBackgroundFloaters(assets) {
+  createBgItems(assets) {
     const parent = assets.hit.scene.getObjectByName('bg')
 
     const bgItems = []
@@ -204,17 +222,54 @@ class Engine {
     this.bgItems = bgItems
   }
 
+  renderBgItems(delta) {
+    this.bgItems.forEach(({ node, speed, pos }) => {
+      if (node.position.z > 100) {
+        node.position.z = pos
+      } else {
+        node.position.z += speed * delta
+      }
+    })
+  }
+
   createClickables(assets) {
     const clickables = []
 
-    assets.hit.scene.traverse(node => {
-      if (node.parent && node.parent.name && node.parent.name === 'replay') {
-        const adjacent = assets.hit.scene.getObjectByName(node.name.replace('_replay', '_over'))
-        clickables.push([node, adjacent])
-      }
+    const replay = assets.hit.scene.getObjectByName('replay')
+    console.log(replay)
+
+    // assets.hit.scene.traverse(node => {
+    //   if (node.parent && node.parent.name && node.parent.name === 'replay') {
+    //     const name = node.name.replace('_replay', '_over')
+    //     console.log({ name })
+    //     const adjacent = assets.hit.scene.getObjectByName(name)
+    //     if (!adjacent) {
+    //       console.log('adjacent not found', name, adjacent, node)
+    //     }
+    //     const parent = new THREE.Object3D()
+    //     parent.add(node, adjacent)
+
+    //     clickables.push(parent)
+    //   }
+    // })
+
+    // this.clickables = shuffleArray(clickables)
+  }
+
+  renderClickables() {
+    this.spawnedClickables.forEach(clickable => {
+      console.log({ clickable })
     })
 
-    this.clickables = shuffleArray(clickables)
+    if (this.nextClickableTime < time) {
+      const { addSpawnTime, maxSpawnTime } = config.clickable
+      this.nextClickableTime = time + Math.random() * maxSpawnTime + addSpawnTime
+
+      const clickable = this.clickables[this.lastClickableId]
+      console.log({ clickable })
+
+      this.lastClickableId += 1
+    }
   }
 
   createControllers() {
@@ -230,17 +285,12 @@ class Engine {
 
     scene.add(controller2)
 
-    // The XRControllerModelFactory will automatically fetch controller models
-    // that match what the user is holding as closely as possible. The models
-    // should be attached to the object returned from getControllerGrip in
-    // order to match the orientation of the held device.
-
     this.controller1 = controller1
     this.controller2 = controller2
   }
 
   createControl(id, controllerModelFactory) {
-    const { renderer } = this
+    const { renderer, scene } = this
 
     const controller = renderer.xr.getController(id)
     controller.userData.isSelecting = false
@@ -259,23 +309,6 @@ class Engine {
     scene.add(grip)
 
     return controller
-  }
-
-  createShots() {
-    this.shots = []
-
-    for (let i = 0; i < 100; i++) {
-      const geo = new THREE.SphereGeometry(0.1, 32, 32)
-      const mat = new THREE.MeshBasicMaterial({ color: 'orange' })
-      const shot = new THREE.Mesh(geo, mat)
-      shot.position.x = 10000
-
-      shot.userData.velocity = new THREE.Vector3()
-
-      this.scene.add(shot)
-
-      this.shots.push(shot)
-    }
   }
 
   onSelectStart({ controller }) {
@@ -310,13 +343,13 @@ class Engine {
   renderController({ time, controller }) {
     if (controller.userData.isSelecting) {
       if (this.nextShotTime < time) {
+        this.nextShotTime = time + config.player.reload
+
         this.lastShotId += 1
 
         if (this.lastShotId >= this.shots.length) {
           this.lastShotId = 0
         }
-
-        this.nextShotTime = time + 1000
 
         const object = this.shots[this.lastShotId]
 
@@ -329,6 +362,23 @@ class Engine {
 
         object.userData.velocity.applyQuaternion(controller.quaternion)
       }
+    }
+  }
+
+  createShots() {
+    this.shots = []
+
+    for (let i = 0; i < config.spawnCounts.shots; i++) {
+      const geo = new THREE.SphereGeometry(0.1, 32, 32)
+      const mat = new THREE.MeshBasicMaterial({ color: 'orange' })
+      const shot = new THREE.Mesh(geo, mat)
+      shot.position.x = 10000
+
+      shot.userData.velocity = new THREE.Vector3()
+
+      this.scene.add(shot)
+
+      this.shots.push(shot)
     }
   }
 
@@ -356,17 +406,11 @@ class Engine {
 
     this.renderController({ delta, time, controller: this.controller1 })
     this.renderController({ delta, time, controller: this.controller2 })
+
     this.renderShots(delta)
 
+    this.renderBgItems(delta)
     this.renderEnvironment(time)
-
-    this.bgItems.forEach(({ node, speed, pos }) => {
-      if (node.position.z > 100) {
-        node.position.z = pos
-      } else {
-        node.position.z += speed * delta
-      }
-    })
 
     renderer.render(scene, camera)
   }
