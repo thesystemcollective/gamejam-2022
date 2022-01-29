@@ -2,68 +2,92 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <title>Game Over or Replay</title>
+<title>Game Over or Replay</title>
 
-  <style type="text/css">
-    body {
-      width: 100%;
-      overflow: hidden;
-      margin: 0;
-      background-color: #000;
-      color: #fff;
-    }
+<style type="text/css">
+  body {
+    width: 100%;
+    overflow: hidden;
+    margin: 0;
+    background-color: #000;
+    color: #fff;
+  }
 
-    a {
-      color: #fff;
-    }
-    a:hover {
-      color: #fff;
-    }
+  a {
+    color: #fff;
+  }
+  a:hover {
+    color: #fff;
+  }
 
-    canvas {
-      display: block;
-    }
+  canvas {
+    display: block;
+  }
 
-    #gui {
-      display: grid;
-      color: white;
-      height: 100vh;
-    }
+  footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+  }
 
-    #gui div {
-      display: grid;
-      align-items: center;
-      justify-items: center;
-    }
+  #gui {
+    display: grid;
+    color: white;
+  }
 
-    #gui .hidden {
-      display: none;
-    }
+  #gui div {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+  }
 
-    #gui #VRButton {
-      color: white;
-      background: black;
-      padding: 1em;
-    }
+  #gui .hidden {
+    display: none;
+  }
 
-    #gui #VRButtonMessage {
-      color: white;
-    }
-  </style>
+  #gui #VRButton {
+    color: white;
+    background: black;
+    padding: 1em;
+  }
+
+  #gui #VRButtonMessage {
+    color: white;
+  }
+
+  #license {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+  }
+</style>
+
 </head>
 
 <body>
+<noscript>
+  <p>This page hosts a web virtual reality experience.</p>
+  <p>It needs javascript to run.</p>
+</noscript>
+
   <div id="gui">
     <div id="loading">loading ...</div>
     <div id="VRButton" class="hidden"></div>
   </div>
 
-  <div>
+  <div id="team">
+    <p>Concept, Graphics: <a href="https://litto.work">litto</a></p>
+    <p>Programming: <a href="https://jaeh.at">jascha</a></p>
+    <p>Music: <a href="https://">manuel</a></p>
+  </div>
+  
+  <div id="license">
     <p>This game is free as in freedom.</p>
     <p>
       Graphics:
@@ -74,7 +98,12 @@
       <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">AGPL 3.0</a>
     </p>
   </div>
+<audio id="audio-ambient">
+  <source src="music/manuel-cyrill-bachinger-cute-and-sad.mp3" type="audio/mp3">
+</audio>
+
   <script type="module" src="index.js"></script>
+
 </body>
 
 </html>
