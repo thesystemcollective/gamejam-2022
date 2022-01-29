@@ -36,9 +36,16 @@
     width: 100%;
   }
 
+  img {
+    max-height: 70vh;
+    display: block;
+    margin: 0 auto;
+  }
+
   #gui {
     display: grid;
     color: white;
+    font-size: 1.5em;
   }
 
   #gui div {
@@ -55,6 +62,7 @@
     color: white;
     background: black;
     padding: 1em;
+    font-size: 1em;
   }
 
   #gui #VRButtonMessage {
@@ -62,9 +70,11 @@
   }
 
   #license {
-    position: absolute;
-    right: 0;
-    bottom: 0;
+    float: right;
+  }
+
+  #team {
+    float: left;
   }
 </style>
 
@@ -76,28 +86,33 @@
   <p>It needs javascript to run.</p>
 </noscript>
 
+<img src="dualreality.jpg" />
+
   <div id="gui">
     <div id="loading">loading ...</div>
     <div id="VRButton" class="hidden"></div>
   </div>
 
-  <div id="team">
-    <p>Concept, Graphics: <a href="https://litto.work">litto</a></p>
-    <p>Programming: <a href="https://jaeh.at">jascha</a></p>
-    <p>Music: <a href="https://">manuel</a></p>
-  </div>
-  
-  <div id="license">
-    <p>This game is free as in freedom.</p>
-    <p>
-      Graphics:
-      <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>,
-    </p>
-    <p>
-      Code:
-      <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">AGPL 3.0</a>
-    </p>
-  </div>
+  <footer>
+    <div id="team">
+      <p>concept, graphics: <a href="https://litto.work" target="_blank">litto</a></p>
+      <p>programming: <a href="https://jaeh.at" target="_blank">jascha</a></p>
+      <p>music: <a href="https://www.lyricallumen.com/" target="_blank">manuel</a></p>
+    </div>
+
+    <div id="license">
+      <p>this game is free as in freedom.</p>
+      <p>
+        graphics:
+        <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>,
+      </p>
+      <p>
+        code:
+        <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">AGPL 3.0</a>
+      </p>
+    </div>
+  </footer>
+
 <audio id="audio-ambient">
   <source src="music/manuel-cyrill-bachinger-cute-and-sad.mp3" type="audio/mp3">
 </audio>
