@@ -72,6 +72,7 @@ class Engine {
     this.onSelectStart = this.onSelectStart.bind(this)
     this.onWindowResize = this.onWindowResize.bind(this)
     this.render = this.render.bind(this)
+    this.onSessionEnd = this.onSessionEnd.bind(this)
   }
 
   async init() {
@@ -130,9 +131,19 @@ class Engine {
 
     renderer.xr.enabled = true
 
+    renderer.xr.addEventListener('sessionend', this.onSessionEnd)
+
     document.body.appendChild(renderer.domElement)
 
     this.renderer = renderer
+  }
+
+  onSessionEnd() {
+    this.audioElement.pause()
+    setTimeout(() => {
+      this.sound.pause()
+      this.sound.setVolume(1)
+    }, 1000)
   }
 
   createVRButton() {
@@ -288,10 +299,10 @@ class Engine {
 
   renderClickables({ delta, time }) {
     this.spawnedClickables.forEach(clickable => {
-      if (clickable.position.z < -1.2) {
-        clickable.position.z += delta * config.clickable.speedMultiplier
-      } else {
-        this.score = 0
+      clickable.position.z += delta * config.clickable.speedMultiplier
+
+      if (clickable.position.z > 50) {
+        clickable.position.z = -12
       }
     })
 
@@ -362,10 +373,16 @@ class Engine {
 
     const intersections = this.raycaster.intersectObjects(this.scene.children, true)
 
+    let foundHit = false
     intersections.forEach(intersection => {
-      const { distance, object } = intersection
+      if (foundHit) {
+        return
+      }
+
+      const { object } = intersection
       if (object.name.startsWith('hit')) {
-        object.visible = false
+        foundHit = true
+        object.position.x = 10000
       }
     })
   }
@@ -381,7 +398,7 @@ class Engine {
     if (targetRayMode === 'tracked-pointer') {
       const geometry = new THREE.BufferGeometry()
       geometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, -1], 3))
-      geometry.setAttribute('color', new THREE.Float32BufferAttribute([0.5, 0.5, 0.5, 0, 0, 0], 3))
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute([1, 1, 1, 0, 0, 0], 3))
 
       const material = new THREE.LineBasicMaterial({
         vertexColors: true,
@@ -390,8 +407,6 @@ class Engine {
 
       return new THREE.Line(geometry, material)
     } else if (targetRayMode === 'gaze') {
-      this.arrow = new THREE.ArrowHelper(this.raycaster.ray.direction, this.ra)
-
       const geometry = new THREE.RingGeometry(0.02, 0.04, 32).translate(0, 0, -1)
       const material = new THREE.MeshBasicMaterial({ opacity: 0.5, transparent: true })
       return new THREE.Mesh(geometry, material)
@@ -411,7 +426,7 @@ class Engine {
   }
 
   gameOver() {
-    console.error("GAAAME OVER")
+    console.error("GAME OVER")
     // dissolve all hit items
     // spawn game over / replay screen
     // add buttons for "replay" and "game over"
