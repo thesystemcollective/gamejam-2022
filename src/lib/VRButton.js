@@ -1,5 +1,7 @@
 class VRButton {
-  static createButton(renderer) {
+  static createButton(engine) {
+    const { renderer } = engine
+
     const button = document.createElement('button')
     button.id = 'VRButton'
 
@@ -13,6 +15,8 @@ class VRButton {
         button.textContent = 'EXIT VR'
 
         currentSession = session
+
+        engine.startGame(session)
       }
 
       function onSessionEnded(/*event*/) {
