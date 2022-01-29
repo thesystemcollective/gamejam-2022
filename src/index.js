@@ -92,6 +92,8 @@ class Engine {
     this.createScene()
     this.createRenderer()
     this.createCamera()
+
+    this.createEnvironment(assets)
     this.createLights()
     this.createFog()
 
@@ -102,7 +104,6 @@ class Engine {
 
     this.createVRButton()
 
-    this.createEnvironment(assets)
     // this.createBgItems(assets)
     this.createClickables(assets)
 
@@ -172,10 +173,10 @@ class Engine {
   }
 
   createLights() {
-    const dirLight = new THREE.DirectionalLight(0xfffdd8, 0.9)
+    const dirLight = new THREE.DirectionalLight(0xfffdd8, 2)
     dirLight.position.set(1, 1, 1).normalize()
 
-    const ambLight = new THREE.AmbientLight(0xfffdd8, 0.9)
+    const ambLight = new THREE.AmbientLight(0xfffdd8, 2)
 
     this.scene.add(dirLight, ambLight)
   }
@@ -301,7 +302,7 @@ class Engine {
       const clickable = this.clickables[this.currentClickableId]
       const dir = Math.random() > 0.5 ? 1 : -1
       clickable.position.x = Math.random() * dir
-      clickable.position.y = 1.6 + Math.random() * dir
+      clickable.position.y = 1.2 + Math.random() * dir
       clickable.position.z = -12
       clickable.visible = true
 
