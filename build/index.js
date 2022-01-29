@@ -11,9 +11,11 @@ const copyStaticFiles = async ({ inDir, outDir }) => {
     files.map(async file => {
       const content = await fs.readFile(file)
 
-      const basename = path.basename(file)
+      const outFile = file.replace(path.join(inDir, 'static'), outDir)
 
-      const outFile = path.join(outDir, basename)
+      const dirname = path.dirname(outFile)
+
+      await fs.mkdirp(dirname)
 
       await fs.writeFile(outFile, content)
     }),
