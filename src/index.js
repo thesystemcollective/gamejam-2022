@@ -85,7 +85,7 @@ class Engine {
     // load a sound and set it as the Audio object's buffer
     const audioLoader = new THREE.AudioLoader();
 
-    this.buffer = await promisifiedLoad({ loader: audioLoader, file: 'music/gameoverreplay.mp3' })
+    this.buffer = await promisifiedLoad({ loader: audioLoader, file: 'music/gameover-or-replay.mp3' })
 
     this.loading.classList.add('hidden')
 
