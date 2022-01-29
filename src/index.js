@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory'
 
-import { pointOnCircle, promisifiedLoad, shuffleArray, VRButton } from './lib/index.js'
+import { pointOnCircle, promisifiedLoad, shuffleArray, Laser, VRButton } from './lib/index.js'
 
 const config = {
   player: {
@@ -21,7 +21,7 @@ const config = {
     maxSpawnTime: 500,
     addSpawnTime: 1000,
     speedMultiplier: 0.5,
-  }
+  },
 }
 
 class Engine {
@@ -134,7 +134,7 @@ class Engine {
   }
 
   createSkybox({ color, layer }) {
-    const geo = new THREE.SphereGeometry(100, 64, 64)
+    const geo = new THREE.SphereGeometry(50, 64, 64)
     const mat = new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
 
     const skyBox = new THREE.Mesh(geo, mat)
@@ -152,11 +152,12 @@ class Engine {
 
     assets.env.scene.traverse(node => {
       if (node.isMesh) {
-        if (node.name.endsWith('_over')) {
-          const name = node.name.replace('_over', '')
+        if (node.name.endsWith('_L')) {
+          const name = node.name.replace('_L', '')
           materials[name] = node.material
         } else {
-          meshes[node.name] = node
+          const name = node.name.replace('_R', '')
+          meshes[name] = node
         }
       }
     })
@@ -176,7 +177,7 @@ class Engine {
       }
 
       if (name.startsWith('tunnel')) {
-        meshL.rotation.z = 3
+        // meshL.rotation.z = 3
         this.tunnels.push(meshL, meshR)
       }
 
@@ -280,7 +281,7 @@ class Engine {
 
     if (this.nextClickableTime < time) {
       const { addSpawnTime, maxSpawnTime } = config.clickable
-      this.nextClickableTime = time + (Math.random() * maxSpawnTime) + addSpawnTime
+      this.nextClickableTime = time + Math.random() * maxSpawnTime + addSpawnTime
 
       const clickable = this.clickables[this.currentClickableId]
       const dir = Math.random() > 0.5 ? 1 : -1
